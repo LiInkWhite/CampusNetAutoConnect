@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>校园网自动连接 - 配置</title>
+<style>
+  :root{
+    --bg:#f5f7fa; --card:#fff; --text:#1f2937; --sub:#6b7280;
+    --primary:#3b82f6; --primary-d:#2563eb; --border:#e5e7eb;
+    --green:#10b981; --red:#ef4444; --amber:#f59e0b;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Microsoft YaHei",sans-serif;
+    background:var(--bg);color:var(--text);min-height:100vh;padding:24px 16px;}
+  .wrap{max-width:780px;margin:0 auto;}
+  header{display:flex;align-items:center;gap:14px;margin-bottom:20px;}
+  .logo{width:42px;height:42px;border-radius:10px;background:linear-gradient(135deg,#3b82f6,#2563eb);
+    display:flex;align-items:center;justify-content:center;color:#fff;font-size:20px;font-weight:bold;}
+  header h1{font-size:20px;}
+  header p{font-size:13px;color:var(--sub);}
+  .tabs{display:flex;gap:8px;margin-bottom:20px;border-bottom:1px solid var(--border);}
+  .tab{padding:10px 18px;font-size:14px;cursor:pointer;color:var(--sub);border:none;background:none;
+    border-bottom:2px solid transparent;transition:.15s;}
+  .tab.active{color:var(--primary);border-bottom-color:var(--primary);font-weight:600;}
+  .tab:hover{color:var(--primary);}
+  .tabpane{display:none;}
+  .tabpane.active{display:block;}
+  .status-card{background:var(--card);border:1px solid var(--border);border-radius:12px;
+    padding:18px;margin-bottom:20px;display:flex;align-items:center;gap:14px;box-shadow:0 1px 3px rgba(0,0,0,.05);}
+  .dot{width:14px;height:14px;border-radius:50%;flex-shrink:0;}
+  .dot.connected{background:var(--green);box-shadow:0 0 0 4px rgba(16,185,129,.15)}
+  .dot.connecting{background:var(--amber);box-shadow:0 0 0 4px rgba(245,158,11,.15);animation:pulse 1.2s infinite}
+  .dot.disconnected{background:var(--red);box-shadow:0 0 0 4px rgba(239,68,68,.15)}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+  .status-text{flex:1;}
+  .status-text .title{font-size:15px;font-weight:600;}
+  .status-text .desc{font-size:12px;color:var(--sub);margin-top:2px;}
+  .card{background:var(--card);border:1px solid var(--border);border-radius:12px;
+    padding:22px;margin-bottom:20px;box-shadow:0 1px 3px rgba(0,0,0,.05);}
+  .card h2{font-size:16px;margin-bottom:16px;display:flex;align-items:center;gap:8px;}
+  .field{margin-bottom:16px;}
+  .field label{display:block;font-size:13px;font-weight:500;margin-bottom:6px;color:#374151;}
+  .field .hint{font-size:11px;color:var(--sub);font-weight:normal;margin-left:4px;}
+  .field input,.field select{width:100%;padding:10px 12px;border:1px solid var(--border);
+    border-radius:8px;font-size:14px;outline:none;transition:border .15s;}
+  .field input:focus,.field select:focus{border-color:var(--primary);}
+  .field.highlight input{border-color:var(--primary);box-shadow:0 0 0 3px rgba(59,130,246,.15);}
+  .row{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+  .switch-row{display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid var(--border);}
+  .switch-row:last-child{border-bottom:none;}
+  .switch-row .lbl{font-size:14px;}
+  .switch-row .lbl small{display:block;color:var(--sub);font-size:12px;margin-top:2px;}
+  .switch{position:relative;width:46px;height:26px;flex-shrink:0;}
+  .switch input{opacity:0;width:0;height:0;}
+  .slider{position:absolute;cursor:pointer;top:0;left:0;right:0;bottom:0;background:#d1d5db;
+    border-radius:26px;transition:.2s;}
+  .slider:before{content:"";position:absolute;height:20px;width:20px;left:3px;bottom:3px;
+    background:#fff;border-radius:50%;transition:.2s;box-shadow:0 1px 3px rgba(0,0,0,.2);}
+  .switch input:checked + .slider{background:var(--primary);}
+  .switch input:checked + .slider:before{transform:translateX(20px);}
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:10px 20px;
+    border-radius:8px;font-size:14px;font-weight:500;cursor:pointer;border:none;transition:.15s;}
+  .btn-primary{background:var(--primary);color:#fff;}
+  .btn-primary:hover{background:var(--primary-d);}
+  .btn-ghost{background:transparent;color:var(--primary);border:1px solid var(--primary);}
+  .btn-ghost:hover{background:rgba(59,130,246,.06);}
+  .actions{display:flex;gap:12px;justify-content:flex-end;}
+  .toast{position:fixed;top:20px;right:20px;background:#1f2937;color:#fff;padding:12px 18px;
+    border-radius:8px;font-size:14px;opacity:0;transform:translateY(-10px);transition:.25s;z-index:99;
+    box-shadow:0 4px 12px rgba(0,0,0,.2);}
+  .toast.show{opacity:1;transform:translateY(0);}
+  .toast.success{background:var(--green);}
+  .toast.error{background:var(--red);}
+  details.adv{margin-top:6px;}
+  details.adv summary{cursor:pointer;color:var(--sub);font-size:13px;padding:4px 0;user-select:none;}
+  details.adv summary:hover{color:var(--primary);}
+  /* 日志 */
+  .log-list{font-family:Consolas,Monaco,monospace;font-size:12px;max-height:420px;overflow-y:auto;
+    background:#0f172a;border-radius:8px;padding:12px;}
+  .log-item{padding:3px 0;color:#cbd5e1;line-height:1.5;word-break:break-all;}
+  .log-item .t{color:#64748b;margin-right:8px;}
+  .log-item.INFO .lv{color:#38bdf8;}
+  .log-item.WARNING .lv{color:#fbbf24;}
+  .log-item.ERROR .lv{color:#f87171;}
+  .log-item .lv{font-weight:600;margin-right:6px;}
+  .log-empty{color:#64748b;text-align:center;padding:20px;}
+  /* 统计 */
+  .stat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px;}
+  .stat-box{background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:16px;text-align:center;}
+  .stat-box .num{font-size:24px;font-weight:700;color:var(--primary);}
+  .stat-box .lbl{font-size:12px;color:var(--sub);margin-top:4px;}
+  .stat-table{width:100%;border-collapse:collapse;font-size:13px;}
+  .stat-table th,.stat-table td{padding:8px 10px;text-align:center;border-bottom:1px solid var(--border);}
+  .stat-table th{color:var(--sub);font-weight:500;background:var(--bg);}
+  .bar-wrap{background:#e5e7eb;border-radius:4px;height:8px;overflow:hidden;}
+  .bar{height:100%;background:linear-gradient(90deg,#3b82f6,#2563eb);border-radius:4px;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="logo">网</div>
+    <div>
+      <h1>校园网自动连接</h1>
+      <p>校园网 · Dr.COM EPortal 自动认证</p>
+    </div>
+  </header>
+
+  <div class="tabs">
+    <button class="tab active" data-tab="config">配置</button>
+    <button class="tab" data-tab="stats">统计</button>
+    <button class="tab" data-tab="logs">日志</button>
+  </div>
+
+  <!-- 配置页 -->
+  <div class="tabpane active" id="pane-config">
+    <div class="status-card">
+      <div class="dot disconnected" id="dot"></div>
+      <div class="status-text">
+        <div class="title" id="statusTitle">检测中…</div>
+        <div class="desc" id="statusDesc"></div>
+      </div>
+      <button class="btn btn-ghost" id="btnConnect">立即连接</button>
+    </div>
+
+    <div class="card">
+      <h2>账号设置</h2>
+      <div class="field" id="fldAccount">
+        <label>账号 <span class="hint">默认是学号</span></label>
+        <input type="text" id="account" placeholder="请输入学号">
+      </div>
+      <div class="field" id="fldPassword">
+        <label>密码 <span class="hint">默认是身份证后六位</span></label>
+        <input type="password" id="password" placeholder="请输入密码">
+      </div>
+      <div class="field">
+        <label>运营商</label>
+        <select id="operator">
+          <option value="telecom">电信 (telecom)</option>
+          <option value="cmcc">移动 (cmcc)</option>
+          <option value="unicom">联通 (unicom)</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>功能开关</h2>
+      <div class="switch-row">
+        <div class="lbl">开机自启<small>登录 Windows 后自动启动本程序并连接校园网</small></div>
+        <label class="switch"><input type="checkbox" id="autoStart"><span class="slider"></span></label>
+      </div>
+      <div class="switch-row">
+        <div class="lbl">连接成功提醒<small>自动连上校园网时弹窗通知</small></div>
+        <label class="switch"><input type="checkbox" id="notifyOnUp"><span class="slider"></span></label>
+      </div>
+      <div class="switch-row">
+        <div class="lbl">断网提醒<small>校园网断开时弹窗通知</small></div>
+        <label class="switch"><input type="checkbox" id="notifyOnDown"><span class="slider"></span></label>
+      </div>
+      <div class="switch-row">
+        <div class="lbl">连接成功后自动退出<small>联网成功后关闭本程序（后台不再常驻）</small></div>
+        <label class="switch"><input type="checkbox" id="exitAfterConnect"><span class="slider"></span></label>
+      </div>
+      <div class="switch-row">
+        <div class="lbl">连接后收起至托盘<small>联网后自动收起，后台继续守护网络（断网仍会重连）</small></div>
+        <label class="switch"><input type="checkbox" id="minimizeAfterConnect"><span class="slider"></span></label>
+      </div>
+    </div>
+
+    <div class="card">
+      <details class="adv">
+        <summary>高级设置（一般无需修改）</summary>
+        <div style="margin-top:14px">
+          <div class="row">
+            <div class="field">
+              <label>登录入口 IP</label>
+              <input type="text" id="inletIp" placeholder="192.168.40.2">
+            </div>
+            <div class="field">
+              <label>探测/重连间隔(秒)</label>
+              <input type="number" id="attemptDelay" min="1" placeholder="5">
+            </div>
+          </div>
+          <div class="row">
+            <div class="field">
+              <label>最大尝试次数 <span class="hint">达到后暂停自动登录</span></label>
+              <input type="number" id="maxAttempts" min="1" max="100" placeholder="12">
+            </div>
+            <div class="field">
+              <label>配置页端口 <span class="hint">重启程序后生效</span></label>
+              <input type="number" id="webPort" min="1024" max="65535" placeholder="17777">
+            </div>
+          </div>
+          <div class="row">
+            <div class="field">
+              <label>回调 callback</label>
+              <input type="text" id="callback" placeholder="dr1003">
+            </div>
+            <div class="field">
+              <label>登录方法 login_method</label>
+              <input type="text" id="loginMethod" placeholder="1">
+            </div>
+          </div>
+          <div class="row">
+            <div class="field">
+              <label>WAN IPv4 <span class="hint">可不填</span></label>
+              <input type="text" id="ipv4" placeholder="留空自动">
+            </div>
+            <div class="field">
+              <label>WAN IPv6 <span class="hint">可不填</span></label>
+              <input type="text" id="ipv6" placeholder="留空自动">
+            </div>
+          </div>
+          <div class="field">
+            <label>MAC 地址 <span class="hint">一般默认即可</span></label>
+            <input type="text" id="mac" placeholder="000000000000">
+          </div>
+          <div class="field">
+            <label>User-Agent <span class="hint">一般不用改</span></label>
+            <input type="text" id="ua">
+          </div>
+        </div>
+      </details>
+    </div>
+
+    <div class="card">
+      <div class="actions">
+        <button class="btn btn-primary" id="btnSave">保存配置</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 统计页 -->
+  <div class="tabpane" id="pane-stats">
+    <div class="stat-grid" id="statSummary"></div>
+    <div class="card">
+      <h2>近 7 天连接统计</h2>
+      <table class="stat-table">
+        <thead><tr><th>日期</th><th>成功</th><th>失败</th><th>成功率</th><th>在线时长</th></tr></thead>
+        <tbody id="statBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- 日志页 -->
+  <div class="tabpane" id="pane-logs">
+    <div class="card">
+      <h2>运行日志</h2>
+      <div class="log-list" id="logList"><div class="log-empty">暂无日志</div></div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const $ = id => document.getElementById(id);
+// 从 URL 获取 token（鉴权用）
+const TOKEN = new URLSearchParams(location.search).get('token') || '';
+
+function showToast(msg, type){
+  const t = $('toast');
+  t.textContent = msg;
+  t.className = 'toast show ' + (type||'');
+  setTimeout(()=>{ t.className = 'toast'; }, 2500);
+}
+
+// 带 token 的 fetch
+async function api(path, opts){
+  opts = opts || {};
+  const sep = path.includes('?') ? '&' : '?';
+  const url = path + sep + 'token=' + encodeURIComponent(TOKEN);
+  const headers = opts.headers || {};
+  headers['X-Auth-Token'] = TOKEN;
+  return fetch(url, { ...opts, headers });
+}
+
+function renderStatus(s){
+  const map = {
+    connected: ['已连接','网络已连上校园网'],
+    connecting: ['连接中','正在尝试认证…'],
+    disconnected: ['未连接','等待自动重连'],
+    error: ['异常','连接出现错误']
+  };
+  const [title, desc] = map[s.state] || ['未知',''];
+  $('statusTitle').textContent = title;
+  const last = s.last_result ? (' · ' + s.last_result) : '';
+  $('statusDesc').textContent = (s.last_check || '') + last;
+  $('dot').className = 'dot ' + (s.state === 'connected' ? 'connected' : s.state === 'connecting' ? 'connecting' : 'disconnected');
+}
+
+async function refreshStatus(){
+  try{
+    const r = await api('/api/status');
+    const j = await r.json();
+    if(j.code === 0) renderStatus(j.data);
+  }catch(e){}
+}
+
+async function loadConfig(){
+  try{
+    const r = await api('/api/config');
+    const j = await r.json();
+    if(j.code !== 0){ showToast('加载配置失败：'+j.msg, 'error'); return; }
+    const d = j.data;
+    $('account').value = d.account || '';
+    $('password').value = d.password || '';
+    $('operator').value = d.operator || 'cmcc';
+    $('autoStart').checked = !!d.auto_start;
+    $('notifyOnUp').checked = !!d.notify_on_up;
+    $('notifyOnDown').checked = !!d.notify_on_down;
+    $('exitAfterConnect').checked = !!d.exit_after_connect;
+    $('minimizeAfterConnect').checked = !!d.minimize_after_connect;
+    $('inletIp').value = d.inlet_ip || '';
+    $('attemptDelay').value = d.attempt_delay || 5;
+    $('maxAttempts').value = d.max_attempts || 12;
+    $('webPort').value = d.web_port || 17777;
+    $('callback').value = d.callback || '';
+    $('loginMethod').value = d.login_method || '';
+    $('ipv4').value = d.ipv4 || '';
+    $('ipv6').value = d.ipv6 || '';
+    $('mac').value = d.mac || '';
+    $('ua').value = d.ua || '';
+    // 首次引导：账号为空时高亮
+    if(!d.account){
+      $('fldAccount').classList.add('highlight');
+      $('fldPassword').classList.add('highlight');
+    }
+  }catch(e){ showToast('加载配置失败', 'error'); }
+}
+
+$('btnSave').onclick = async ()=>{
+  const payload = {
+    account: $('account').value.trim(),
+    password: $('password').value,
+    operator: $('operator').value,
+    inlet_ip: $('inletIp').value.trim(),
+    attempt_delay: parseInt($('attemptDelay').value) || 5,
+    max_attempts: parseInt($('maxAttempts').value) || 12,
+    web_port: parseInt($('webPort').value) || 17777,
+    callback: $('callback').value.trim(),
+    login_method: $('loginMethod').value.trim(),
+    ipv4: $('ipv4').value.trim(),
+    ipv6: $('ipv6').value.trim(),
+    mac: $('mac').value.trim(),
+    ua: $('ua').value.trim(),
+    auto_start: $('autoStart').checked,
+    notify_on_up: $('notifyOnUp').checked,
+    notify_on_down: $('notifyOnDown').checked,
+    exit_after_connect: $('exitAfterConnect').checked,
+    minimize_after_connect: $('minimizeAfterConnect').checked
+  };
+  try{
+    const r = await api('/api/config/save', {
+      method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload)
+    });
+    const j = await r.json();
+    if(j.code === 0){ showToast('保存成功','success'); $('fldAccount').classList.remove('highlight'); $('fldPassword').classList.remove('highlight'); }
+    else { showToast(j.msg || '保存失败','error'); }
+  }catch(e){ showToast('保存失败','error'); }
+};
+
+$('btnConnect').onclick = async ()=>{
+  $('btnConnect').disabled = true;
+  try{
+    const r = await api('/api/connect');
+    const j = await r.json();
+    if(j.code === 0){ showToast(j.msg,'success'); renderStatus(j.data); }
+    else { showToast(j.msg,'error'); }
+  }catch(e){ showToast('连接请求失败','error'); }
+  $('btnConnect').disabled = false;
+};
+
+// 日志
+async function refreshLogs(){
+  try{
+    const r = await api('/api/logs?n=200');
+    const j = await r.json();
+    if(j.code !== 0) return;
+    const logs = j.data || [];
+    const box = $('logList');
+    if(logs.length === 0){ box.innerHTML = '<div class="log-empty">暂无日志</div>'; return; }
+    box.innerHTML = logs.map(l => {
+      const lv = (l.level||'INFO').toUpperCase();
+      return '<div class="log-item '+lv+'"><span class="t">'+l.time+'</span><span class="lv">'+lv+'</span>'+esc(l.msg)+'</div>';
+    }).join('');
+    box.scrollTop = box.scrollHeight;
+  }catch(e){}
+}
+
+function esc(s){
+  const d = document.createElement('div');
+  d.textContent = s || '';
+  return d.innerHTML;
+}
+
+// 统计
+function fmtDuration(sec){
+  sec = sec || 0;
+  const h = Math.floor(sec/3600), m = Math.floor((sec%3600)/60);
+  if(h > 0) return h+'小时'+m+'分';
+  if(m > 0) return m+'分';
+  return sec+'秒';
+}
+
+async function refreshStats(){
+  try{
+    const r = await api('/api/stats?days=7');
+    const j = await r.json();
+    if(j.code !== 0) return;
+    const list = j.data || [];
+    // 汇总
+    let sumS=0, sumF=0, sumT=0;
+    list.forEach(d=>{ sumS+=d.success; sumF+=d.fail; sumT+=d.connect_time; });
+    const total = sumS+sumF;
+    const rate = total ? Math.round(sumS*100/total) : 100;
+    $('statSummary').innerHTML =
+      '<div class="stat-box"><div class="num">'+sumS+'</div><div class="lbl">连接成功(次)</div></div>'+
+      '<div class="stat-box"><div class="num">'+sumF+'</div><div class="lbl">连接失败(次)</div></div>'+
+      '<div class="stat-box"><div class="num">'+rate+'%</div><div class="lbl">成功率</div></div>';
+    // 明细表
+    const rows = list.slice().reverse(); // 最新在上
+    $('statBody').innerHTML = rows.map(d => {
+      const maxT = Math.max.apply(null, list.map(x=>x.connect_time)) || 1;
+      const pct = Math.round(d.connect_time*100/maxT);
+      return '<tr><td>'+d.date.slice(5)+'</td><td>'+d.success+'</td><td>'+d.fail+'</td>'+
+        '<td>'+d.rate+'%</td><td>'+fmtDuration(d.connect_time)+'</td></tr>';
+    }).join('');
+  }catch(e){}
+}
+
+// 标签切换
+document.querySelectorAll('.tab').forEach(btn => {
+  btn.onclick = ()=>{
+    document.querySelectorAll('.tab').forEach(b=>b.classList.remove('active'));
+    document.querySelectorAll('.tabpane').forEach(p=>p.classList.remove('active'));
+    btn.classList.add('active');
+    $('pane-'+btn.dataset.tab).classList.add('active');
+    if(btn.dataset.tab === 'logs') refreshLogs();
+    if(btn.dataset.tab === 'stats') refreshStats();
+  };
+});
+
+loadConfig();
+refreshStatus();
+refreshStats();
+setInterval(refreshStatus, 5000);
+</script>
+</body>
+</html>

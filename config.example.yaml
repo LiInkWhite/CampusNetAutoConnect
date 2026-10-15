@@ -1,0 +1,44 @@
+# ============================================================
+# CampusNetAutoConnect 配置示例
+# 复制本文件为 config.yaml 后，按提示填写你的信息。
+# 注意：请勿将包含真实账号/密码的 config.yaml 提交到公开仓库！
+# ============================================================
+
+# 账号（一般为学号）
+account: ''
+
+# 密码（一般为身份证后六位）
+password: ''
+
+# 账号运营商：telecom 电信 / cmcc 移动 / unicom 联通
+operator: 'telecom'
+
+# 认证回调（一般无需修改）
+callback: 'dr1003'
+
+# 登录方法（一般无需修改）
+login_method: '1'
+
+# WAN IPv4 地址（可不填，留空自动获取）
+ipv4: ''
+
+# WAN IPv6 地址（可不填）
+ipv6: ''
+
+# MAC 地址（可不填，留空自动获取）
+mac: ''
+
+# 登录入口 IP（校园网认证网关地址，不同学校可能不同）
+inlet_ip: '192.168.40.2'
+
+# User-Agent（一般无需修改）
+ua: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/106.0.0.0 Safari/537.36'
+
+# 最大尝试次数
+max_attempts: 12
+
+# 尝试延迟时间（秒）
+attempt_delay: 5
+
+# 是否只执行一次（不循环）
+only_once: false

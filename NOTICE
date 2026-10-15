@@ -1,0 +1,36 @@
+CampusNetAutoConnect
+Copyright 2026 CampusNetAutoConnect contributors
+
+This product includes software and design references derived from the
+following third-party project, used under the terms of the MIT License:
+
+  connect_jxyy_network
+  https://github.com/wochaoop/connect_jxyy_network
+  Copyright (c) 2023 wochaoop
+
+  Licensed under the MIT License:
+
+    Permission is hereby granted, free of charge, to any person obtaining a copy
+    of this software and associated documentation files (the "Software"), to deal
+    in the Software without restriction, including without limitation the rights
+    to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+    copies of the Software, and to permit persons to whom the Software is
+    furnished to do so, subject to the following conditions:
+
+    The above copyright notice and this permission notice shall be included in
+    all copies or substantial portions of the Software.
+
+    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+    IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+    AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+    LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+    SOFTWARE.
+
+Note:
+  This project is an independent re-implementation in Python. It does not
+  include or copy source code from the upstream project; only the Dr.COM
+  EPortal authentication protocol flow and the configuration file format are
+  referenced. The above notice is retained out of respect for the original
+  author and to acknowledge the design reference.

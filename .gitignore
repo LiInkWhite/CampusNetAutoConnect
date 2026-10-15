@@ -1,0 +1,22 @@
+# 敏感信息 / 运行时产物 —— 切勿提交
+config.yaml
+app.json
+stats.json
+
+# 日志
+logs/
+*.log
+
+# Python 缓存与构建产物
+__pycache__/
+*.pyc
+build/
+dist/
+*.spec
+*.exe
+
+# 编辑器 / 系统文件
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
